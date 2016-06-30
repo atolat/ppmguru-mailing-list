@@ -15,9 +15,11 @@ Text Domain: ppmguru-mailing-list
 /*
 	
 	1. HOOKS
+        1.1 add_action()
 	
 	2. SHORTCODES
-        2.1 pgm_form_shortcode()
+        2.1 pgm_register_shortcodes()
+        2.2 pgm_form_shortcode()
 		
 	3. FILTERS
 		
