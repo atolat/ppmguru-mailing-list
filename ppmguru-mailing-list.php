@@ -9,14 +9,6 @@ License: GPL2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: ppmguru-mailing-list
 */
-
-/* 
-IMPORTANT: Snappy List Builder is now a plugin in the WordPress plugin directory. This means, that if you name your file snappy-list-builder.php you will be prompted in WordPress to update your plugin as WordPress will treat it like the production version of Snappy List Builder.
-*/
-
-/*
-THE FIX: Simply rename your plugin directory to "my-snappy-list-builder" and you php file to my-snappy-list-builder.php and update your plugin header data Text Domain to "my-snappy-list-builder". Save your .php file and you should be good to go!	
-*/
 	
 /* !0. TABLE OF CONTENTS */
 
@@ -25,6 +17,7 @@ THE FIX: Simply rename your plugin directory to "my-snappy-list-builder" and you
 	1. HOOKS
 	
 	2. SHORTCODES
+        2.1 pgm_form_shortcode()
 		
 	3. FILTERS
 		
@@ -48,11 +41,69 @@ THE FIX: Simply rename your plugin directory to "my-snappy-list-builder" and you
 
 
 /* !1. HOOKS */
-
+add_action('init','pgm_register_shortcodes');
 
 
 
 /* !2. SHORTCODES */
+
+function pgm_register_shortcodes(){
+    add_shortcode('pgm_form','pgm_form_shortcode');
+}
+
+function pgm_form_shortcode($args, $content = ""){
+    //form html
+    $output = '
+    <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Create</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+
+<body>
+<div class="starter-template">
+        <h1>Sign Up Form</h1>
+      </div>
+<div class="container">
+    <div class="col-sm-6">
+       <form action="login_create.php" method="post">
+          <div class="form-group">
+             <label for="pgm_fname">First Name</label>
+              <input type="text" class="form-control" name="pgm_fname">
+          </div>
+          <div class="form-group">
+             <label for="pgm_lname">Last Name</label>
+              <input type="text" class="form-control" name="pgm_lname">
+          </div>
+          <div class="pgm_email">
+             <label for="pgm_email">Email</label>
+              <input type="email" class="form-control" name="pgm_email">
+          </div><br>';
+    
+         if(strlen($content)){
+             $output.= '<div>'.$content.'</div>';
+         } 
+          
+          $output.='<input class="btn btn-primary" type="submit" name="pgm_submit" value="Sign Me Up!"> <br><br>
+           
+       </form>
+        
+    </div>
+    
+    
+</div>
+
+</body>
+
+</html>';
+    
+return $output;
+        
+}
 
 
 
