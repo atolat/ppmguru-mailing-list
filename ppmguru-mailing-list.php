@@ -70,6 +70,11 @@ function pgm_register_shortcodes(){
 }
 
 function pgm_form_shortcode($args, $content = ""){
+    //check for id from args and assign it to $id if it is available, else set to 0.
+    $list_id = 0;
+    if(isset($args['id'])){
+        $list_id = (int)$args['id'];
+    }
     //form html
     $output = '
     <!DOCTYPE html>
@@ -87,7 +92,10 @@ function pgm_form_shortcode($args, $content = ""){
       </div>
 <div class="container">
     <div class="col-sm-6">
-       <form action="login_create.php" method="post">
+       <form id="pgm_form" name="pgm_form" method="post"
+       action="/wp-admin/admin-ajax.php?action=pgm_save_subscription" method="post">
+       
+       <input type="hidden" name="pgm_list" value="'. $list_id .'"> 
           <div class="form-group">
              <label for="pgm_fname">First Name</label>
               <input type="text" class="form-control" name="pgm_fname">
@@ -200,6 +208,52 @@ function pgm_list_column_headers($columns){
 
 
 /* !5. ACTIONS */
+//Function to save subscription data to an existing or new subscriber, wp ajax handler will redirect form data to this function.
+function pgm_save_subscription(){
+    //setting up default result array
+    $result = array(
+        'status'=>0,
+        'message'=>'Subscription was not saved.',
+    );
+    
+    try{
+        
+        //get list_id
+        $list_id = (int)$_POST['pgm_list'];
+        
+        //create an array of subscriber data
+        $subscriber_data = array(
+        'fname' => esc_attr($_POST['pgm_fname']),
+        'lname' => esc_attr($_POST['pgm_lname']),
+        'email' => esc_attr($_POST['pgm_email']),
+        );
+        
+        //attempt to create/save/update subscriber
+        $subscriber_id = pgm_save_subscriber($subscriber_data); 
+        
+        if($subscriber_id){
+            //Check if subscriber already has a subscription to the list
+            if(pgm_subscriber_has_subscription($subscriber_id,$list_id)){
+                
+                $list = get_post($list_id);
+                
+                //return error message
+                $result['message'].=esc_attr($subscriber_data['email'].' is already subscribed to list '.$list->post_title.'.');
+            } else {
+                //save the new subscription
+                $subscription_saved = pgm_add_subscription($subscriber_id,$list_id);
+            }
+            
+            if($subscription_saved){
+                $result['status'] = 1;
+                $result['message'] = 'Subscription saved';
+            }
+            
+        }
+    } catch(Exception $e){
+        
+    }
+}
 
 
 
