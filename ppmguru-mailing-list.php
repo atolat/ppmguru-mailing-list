@@ -252,13 +252,69 @@ function pgm_save_subscription(){
         }
     } catch(Exception $e){
         
+    } 
+    
+    //Return result as a JSON string
+    pgm_return_json($result);
+}
+
+function pgm_save_subscriber($subscriber_data){
+    //set default id=0
+    $subscriber_id = 0;
+    
+    try{
+        $subscriber_id = pgm_get_subscriber_id($subscriber_data['email']);
+        
+        if(!$subscriber_id){
+            $subscriber_id = wp_insert_post(
+            array(
+            'post_type'=>'pgm_subscriber',
+            'post_title'=>$subscriber_data['fname'].' '.$subscriber_data['lname'],
+            'post_status'=>'publish',
+            ),
+            true
+            );
+        }
+        
+        //add/update custom metadata
+        update_field(pgm_get_acf_key('pgm_fname'), $subscriber_data['fname'], $subscriber_id);
+        update_field(pgm_get_acf_key('pgm_lname'), $subscriber_data['lname'], $subscriber_id);
+        update_field(pgm_get_acf_key('pgm_email'), $subscriber_data['email'], $subscriber_id)
+    } catch(Exception $e) {
+        
+        //Do something...
     }
+    
+    wp_reset_query();
+    
+    return $subscriber_id;
 }
 
 
 
 
 /* !6. HELPERS */
+function pgm_subscriber_has_subscription($subscriber_id, $list_id){
+    //set default value
+    $has_subscription = false;
+    
+    //get the subscriber from database
+    $subscriber = get_post($subscriber_id);
+    
+    //get subscriptions from database
+    $subscriptions = pgm_get_subscriptions($subscriber_id);
+    
+    //check subscriptions for $list_id
+    if(in_array($list_id,$subscriptions)){
+        
+        $has_subscription = true;
+    } else{
+        
+        //leave to default
+    }
+    
+    return $has_subscription;
+}
 
 
 
