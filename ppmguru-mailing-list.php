@@ -361,13 +361,15 @@ function pgm_get_subscriptions($subscriber_id){
 
     if($lists){
 
-        if(is_array($lists) && count($lists)):
-        foreach($lists as &$list):
-        $subscriptions[]=(int)$list->ID;
-        endforeach;
+        if(is_array($lists) && count($lists)){
+            foreach($lists as &$list){
+                $subscriptions[]=(int)$list->ID;
+            }
+        }
         elseif(is_numeric($lists)){
             $subscriptions[] = $lists;
         }
+
     }
 
     return (array)$subscriptions;
