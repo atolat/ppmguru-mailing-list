@@ -279,7 +279,7 @@ function pgm_save_subscriber($subscriber_data){
         //add/update custom metadata
         update_field(pgm_get_acf_key('pgm_fname'), $subscriber_data['fname'], $subscriber_id);
         update_field(pgm_get_acf_key('pgm_lname'), $subscriber_data['lname'], $subscriber_id);
-        update_field(pgm_get_acf_key('pgm_email'), $subscriber_data['email'], $subscriber_id)
+        update_field(pgm_get_acf_key('pgm_email'), $subscriber_data['email'], $subscriber_id);
     } catch(Exception $e) {
         
         //Do something...
