@@ -282,7 +282,7 @@ function pgm_save_subscriber($subscriber_data){
         update_field(pgm_get_acf_key('pgm_email'), $subscriber_data['email'], $subscriber_id);
     } catch(Exception $e) {
 
-        //Do something...
+        //Do something, if php error occurs...
     }
 
     wp_reset_query();
@@ -302,7 +302,7 @@ function pgm_add_subscription( $subscriber_id, $list_id ) {
 		$subscriptions = pgm_get_subscriptions( $subscriber_id );
 		$subscriptions[]=$list_id;
 		
-		// update slb_subscriptions
+		// update pgm_subscriptions
 		update_field( pgm_get_acf_key('pgm_subscriptions'), $subscriptions, $subscriber_id );
 		
 		// subscriptions updated!
@@ -402,10 +402,11 @@ function pgm_get_subscriptions($subscriber_id){
 
 
 function pgm_return_json($php_array){
+    //encode results as json string
     $json_result = json_encode($php_array);
-
+    //return result
     die($json_result);
-
+    //stop all other processing
     exit;
 
 }
