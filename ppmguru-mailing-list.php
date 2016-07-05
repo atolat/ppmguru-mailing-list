@@ -352,6 +352,38 @@ function pgm_get_subscriber_id($email) {
 }
 
 
+function pgm_get_subscriptions($subscriber_id){
+    //initialize empty array
+    $subscriptions = array();
+
+    //get subscriptions (returns array of list objects)
+    $lists = get_field(pgm_get_acf_key('pgm_subscriptions'),$subscriber_id);
+
+    if($lists){
+
+        if(is_array($lists) && count($lists)):
+        foreach($lists as &$list):
+        $subscriptions[]=(int)$list->ID;
+        endforeach;
+        elseif(is_numeric($lists)){
+            $subscriptions[] = $lists;
+        }
+    }
+
+    return (array)$subscriptions;
+}
+
+
+function pgm_return_json($php_array){
+    $json_result = json_encode($php_array);
+
+    die($json_result);
+
+    exit;
+
+}
+
+
 
 /* !7. CUSTOM POST TYPES */
 
