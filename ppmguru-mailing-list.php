@@ -9,39 +9,39 @@ License: GPL2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: ppmguru-mailing-list
 */
-	
+
 /* !0. TABLE OF CONTENTS */
 
 /*
-	
+
 	1. HOOKS
         1.1 register shortcodes on init
         1.2 add filter to register custom admin column headers
         1.3 add filter to register custom column data
-	
+
 	2. SHORTCODES
         2.1 pgm_register_shortcodes()
         2.2 pgm_form_shortcode()
-		
+
 	3. FILTERS
         3.1 pgm_subscriber_column_headers($columns)
         3.2 pgm_subscriber_column_data($columns,$post_id)
         3.3 pgm_register_custom_admin_titles()
         3.4 pgm_custom_admin_titles( $title, $post_id )
         3.5 pgm_list_column_headers($columns)
-		
+
 	4. EXTERNAL SCRIPTS
-		
+
 	5. ACTIONS
-		
+
 	6. HELPERS
-		
+
 	7. CUSTOM POST TYPES
-	
+
 	8. ADMIN PAGES
-	
+
 	9. SETTINGS
-	
+
 	10. MISCELLANEOUS 
 
 */
@@ -94,7 +94,7 @@ function pgm_form_shortcode($args, $content = ""){
     <div class="col-sm-6">
        <form id="pgm_form" name="pgm_form" method="post"
        action="/wp-admin/admin-ajax.php?action=pgm_save_subscription" method="post">
-       
+
        <input type="hidden" name="pgm_list" value="'. $list_id .'"> 
           <div class="form-group">
              <label for="pgm_fname">First Name</label>
@@ -108,26 +108,26 @@ function pgm_form_shortcode($args, $content = ""){
              <label for="pgm_email">Email</label>
               <input type="email" class="form-control" name="pgm_email">
           </div><br>';
-    
-         if(strlen($content)){
-             $output.= '<div>'.$content.'</div>';
-         } 
-          
-          $output.='<input class="btn btn-primary" type="submit" name="pgm_submit" value="Sign Me Up!"> <br><br>
-           
+
+    if(strlen($content)){
+        $output.= '<div>'.$content.'</div>';
+    } 
+
+    $output.='<input class="btn btn-primary" type="submit" name="pgm_submit" value="Sign Me Up!"> <br><br>
+
        </form>
-        
+
     </div>
-    
-    
+
+
 </div>
 
 </body>
 
 </html>';
-    
-return $output;
-        
+
+    return $output;
+
 }
 
 
@@ -137,11 +137,11 @@ return $output;
 //3.1 This function will take in the admin colums from the subscriber post page and override the column names.
 function pgm_subscriber_column_headers($columns){
     $columns = array(
-    'cb'=>'<input type="checkbox" />', //checkbox-HTML empty checkbox
-    'title'=>__('Subscriber Name'), //update header name to 'Subscriber Name'
-    'email'=>__('Email Address'), //create new header for email
+        'cb'=>'<input type="checkbox" />', //checkbox-HTML empty checkbox
+        'title'=>__('Subscriber Name'), //update header name to 'Subscriber Name'
+        'email'=>__('Email Address'), //create new header for email
     );
-    
+
     return $columns;
 }
 
@@ -149,9 +149,9 @@ function pgm_subscriber_column_headers($columns){
 //3.2 This function will take in the column data, check the header for title or email and get the corresponding data, append it to the output stream and echo it. 
 function pgm_subscriber_column_data($column,$post_id){
     $output = '';
-    
+
     switch($column){
-            
+
         case 'title':
             $fname = get_field('pgm_fname', $post_id);
             $lname = get_field('pgm_lname', $post_id);
@@ -162,7 +162,7 @@ function pgm_subscriber_column_data($column,$post_id){
             $output .= $email;
             break;
     }
-    
+
     echo $output;
 }
 
@@ -173,31 +173,31 @@ function pgm_register_custom_admin_titles() {
 
 //3.4 handles custom admin title "title" column data for post types without titles, we are not using wordpress default titles in our custom field.
 function pgm_custom_admin_titles( $title, $post_id ) {
-   
+
     global $post;
-	
+
     $output = $title;
-   
+
     if( isset($post->post_type) ):
-                switch( $post->post_type ) {
-                        case 'pgm_subscriber':
-	                            $fname = get_field('pgm_fname', $post_id );
-	                            $lname = get_field('pgm_lname', $post_id );
-	                            $output = $fname .' '. $lname;
-	                            break;
-                }
-        endif;
-   
+    switch( $post->post_type ) {
+        case 'pgm_subscriber':
+            $fname = get_field('pgm_fname', $post_id );
+            $lname = get_field('pgm_lname', $post_id );
+            $output = $fname .' '. $lname;
+            break;
+    }
+    endif;
+
     return $output;
 }
 
 //3.5 function to handle list post headers
 function pgm_list_column_headers($columns){
     $columns = array(
-    'cb'=>'<input type="checkbox" />', //checkbox-HTML empty checkbox
-    'title'=>__('Lists'), //update header name to 'List Name'
+        'cb'=>'<input type="checkbox" />', //checkbox-HTML empty checkbox
+        'title'=>__('Lists'), //update header name to 'List Name'
     );
-    
+
     return $columns;
 }
 
@@ -215,78 +215,78 @@ function pgm_save_subscription(){
         'status'=>0,
         'message'=>'Subscription was not saved.',
     );
-    
+
     try{
-        
+
         //get list_id
         $list_id = (int)$_POST['pgm_list'];
-        
+
         //create an array of subscriber data
         $subscriber_data = array(
-        'fname' => esc_attr($_POST['pgm_fname']),
-        'lname' => esc_attr($_POST['pgm_lname']),
-        'email' => esc_attr($_POST['pgm_email']),
+            'fname' => esc_attr($_POST['pgm_fname']),
+            'lname' => esc_attr($_POST['pgm_lname']),
+            'email' => esc_attr($_POST['pgm_email']),
         );
-        
+
         //attempt to create/save/update subscriber
         $subscriber_id = pgm_save_subscriber($subscriber_data); 
-        
+
         if($subscriber_id){
             //Check if subscriber already has a subscription to the list
             if(pgm_subscriber_has_subscription($subscriber_id,$list_id)){
-                
+
                 $list = get_post($list_id);
-                
+
                 //return error message
                 $result['message'].=esc_attr($subscriber_data['email'].' is already subscribed to list '.$list->post_title.'.');
             } else {
                 //save the new subscription
                 $subscription_saved = pgm_add_subscription($subscriber_id,$list_id);
             }
-            
+
             if($subscription_saved){
                 $result['status'] = 1;
                 $result['message'] = 'Subscription saved';
             }
-            
+
         }
     } catch(Exception $e){
-        
+
     } 
-    
+
     //Return result as a JSON string
     pgm_return_json($result);
 }
 
 function pgm_save_subscriber($subscriber_data){
-    //set default id=0
+    //set default id=0, subscriber not saved.
     $subscriber_id = 0;
-    
+
     try{
         $subscriber_id = pgm_get_subscriber_id($subscriber_data['email']);
-        
+
         if(!$subscriber_id){
             $subscriber_id = wp_insert_post(
-            array(
-            'post_type'=>'pgm_subscriber',
-            'post_title'=>$subscriber_data['fname'].' '.$subscriber_data['lname'],
-            'post_status'=>'publish',
-            ),
-            true
+                array(
+                    'post_type'=>'pgm_subscriber',
+                    'post_title'=>$subscriber_data['fname'].' '.$subscriber_data['lname'],
+                    'post_status'=>'publish',
+                ),
+                true
             );
         }
-        
+
         //add/update custom metadata
         update_field(pgm_get_acf_key('pgm_fname'), $subscriber_data['fname'], $subscriber_id);
         update_field(pgm_get_acf_key('pgm_lname'), $subscriber_data['lname'], $subscriber_id);
         update_field(pgm_get_acf_key('pgm_email'), $subscriber_data['email'], $subscriber_id);
     } catch(Exception $e) {
-        
+
         //Do something...
     }
-    
+
     wp_reset_query();
-    
+
     return $subscriber_id;
 }
 
@@ -297,42 +297,58 @@ function pgm_save_subscriber($subscriber_data){
 function pgm_subscriber_has_subscription($subscriber_id, $list_id){
     //set default value
     $has_subscription = false;
-    
+
     //get the subscriber from database
     $subscriber = get_post($subscriber_id);
-    
+
     //get subscriptions from database
     $subscriptions = pgm_get_subscriptions($subscriber_id);
-    
+
     //check subscriptions for $list_id
     if(in_array($list_id,$subscriptions)){
-        
+
         $has_subscription = true;
     } else{
-        
+
         //leave to default
     }
-    
+
     return $has_subscription;
 }
 
 function pgm_get_subscriber_id($email) {
     //set default value
     $subscriber_id = 0;
-    
+
     try{
-        //to check if subscriber already exists
         $subscriber_query = new WP_Query(
-        array(
-            'post_type' => 'pgm_subscriber',
-            'posts_per_page' => 1,
-            'meta_key' => 'pgm_email',
-            'meta_query' => array(
-                
+            array(
+                'post_type' => 'pgm_subscriber',
+                'posts_per_page' => 1,
+                'meta_key' => 'pgm_email',
+                'meta_query' => array(
+                    array(
+                        'key' => 'pgm_email',
+                        'value'=>$email,
+                        'compare' => '=',
+                    ),
+                ),
             )
-        )
-        )
+        );
+
+        if($subscriber_query->have_posts()){
+            $subscriber_query->the_post();
+            $subscriber_id = get_the_ID();
+        }
+    } catch(Exception $e){
+
     }
+
+    wp_reset_query();
+
+    return (int)$subscriber_id;
+
+
 }
 
 
@@ -353,6 +369,3 @@ function pgm_get_subscriber_id($email) {
 
 
 /* !10. MISCELLANEOUS */
-
-
-
