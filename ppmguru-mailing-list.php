@@ -316,6 +316,24 @@ function pgm_subscriber_has_subscription($subscriber_id, $list_id){
     return $has_subscription;
 }
 
+function pgm_get_subscriber_id($email) {
+    //set default value
+    $subscriber_id = 0;
+    
+    try{
+        //to check if subscriber already exists
+        $subscriber_query = new WP_Query(
+        array(
+            'post_type' => 'pgm_subscriber',
+            'posts_per_page' => 1,
+            'meta_key' => 'pgm_email',
+            'meta_query' => array(
+                
+            )
+        )
+        )
+    }
+}
 
 
 
