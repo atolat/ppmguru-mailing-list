@@ -290,6 +290,31 @@ function pgm_save_subscriber($subscriber_data){
     return $subscriber_id;
 }
 
+function pgm_add_subscription( $subscriber_id, $list_id ) {
+	
+	// setup default return value
+	$subscription_saved = false;
+	
+	// IF the subscriber does NOT have the current list subscription
+	if( !pgm_subscriber_has_subscription( $subscriber_id, $list_id ) ){
+	
+		// get subscriptions and append new $list_id
+		$subscriptions = pgm_get_subscriptions( $subscriber_id );
+		$subscriptions[]=$list_id;
+		
+		// update slb_subscriptions
+		update_field( pgm_get_acf_key('pgm_subscriptions'), $subscriptions, $subscriber_id );
+		
+		// subscriptions updated!
+		$subscription_saved = true;
+	
+    }
+	
+	// return result
+	return $subscription_saved;
+	
+}
+
 
 
 
