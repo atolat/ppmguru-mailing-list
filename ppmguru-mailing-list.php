@@ -272,9 +272,7 @@ function pgm_save_subscription(){
         if( count($errors)){
             $result['error'] = 'Some fields are still required. ';
             $result['errors'] = $errors;
-        
-
-        else{
+        } else{
 
             //attempt to create/save/update subscriber
             $subscriber_id = pgm_save_subscriber($subscriber_data); 
@@ -286,7 +284,7 @@ function pgm_save_subscription(){
                     $list = get_post($list_id);
 
                     //return error message
-                    $result['message'].=esc_attr($subscriber_data['email'].' is already subscribed to list '.$list->post_title.'.');
+                    $result['error'].=esc_attr($subscriber_data['email'].' is already subscribed to list '.$list->post_title.'.');
                 } else {
                     //save the new subscription
                     $subscription_saved = pgm_add_subscription($subscriber_id,$list_id);
@@ -295,10 +293,11 @@ function pgm_save_subscription(){
                 if($subscription_saved){
                     $result['status'] = 1;
                     $result['message'] = 'Subscription saved';
+                } else{
+                    $result['error'] = 'Unable to save subscription.';
                 }
 
             }
-        }
         }
     }catch(Exception $e){
 
