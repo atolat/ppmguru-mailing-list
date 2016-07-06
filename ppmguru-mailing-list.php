@@ -2,7 +2,7 @@
 
 /*
 Plugin Name: PPM Guru Mailing List
-Description: Custom email list building plugin for WordPress. Capture new subscribers.Build unlimited lists. Import and export subscribers easily with .csv
+Description: Custom email list building plugin for ppmguru. Capture new subscribers, premium/basic. Build lists for topics. Import and export subscribers with .csv
 Version: 1.0
 Author: Arpan Tolat
 License: GPL2
@@ -33,8 +33,18 @@ Text Domain: ppmguru-mailing-list
 	4. EXTERNAL SCRIPTS
 
 	5. ACTIONS
+        5.1 pgm_save_subscription()
+        5.2 pgm_save_subscriber($subscriber_data)
+        5.3 pgm_add_subscription( $subscriber_id, $list_id )
 
 	6. HELPERS
+        6.1 pgm_has_subscriptions()
+		6.2 pgm_get_subscriber_id()
+		6.3 pgm_get_subscritions()
+		6.4 pgm_return_json()
+		6.5 pgm_get_acf_key()
+		6.6 pgm_get_subscriber_data()
+
 
 	7. CUSTOM POST TYPES
 
@@ -63,18 +73,19 @@ add_action('admin_head-edit.php','pgm_register_custom_admin_titles');
 add_filter('manage_pgm_list_posts_custom_column','pgm_list_column_data',1,2);
 
 // 1.4
-// hint: register ajax actions
+// register ajax actions
 add_action('wp_ajax_nopriv_pgm_save_subscription', 'pgm_save_subscription'); // regular website visitor
 add_action('wp_ajax_pgm_save_subscription', 'pgm_save_subscription'); // admin user
 
 
 
 /* !2. SHORTCODES */
-
+//2.1
 function pgm_register_shortcodes(){
     add_shortcode('pgm_form','pgm_form_shortcode');
 }
 
+//2.2
 function pgm_form_shortcode($args, $content = ""){
     //check for id from args and assign it to $id if it is available, else set to 0.
     $list_id = 0;
@@ -208,15 +219,16 @@ function pgm_list_column_headers($columns){
     return $columns;
 }
 
+//3.5 function to add shotcodes to list column data
 function pgm_list_column_data($column,$post_id){
     $output = '';
-    
+
     switch($column){
         case 'shortcode':
             $output .= '[pgm_form id="'. $post_id .'"]';
             break;
     }
-    
+
     echo $output;
 }
 
@@ -227,12 +239,14 @@ function pgm_list_column_data($column,$post_id){
 
 
 /* !5. ACTIONS */
-//Function to save subscription data to an existing or new subscriber, wp ajax handler will redirect form data to this function.
+//5.1 Function to save subscription data to an existing or new subscriber, wp ajax handler will redirect form data to this function.
 function pgm_save_subscription(){
     //setting up default result array
     $result = array(
         'status'=>0,
         'message'=>'Subscription was not saved.',
+        'error'=>'',
+        'errors'=>array()
     );
 
     try{
@@ -247,29 +261,46 @@ function pgm_save_subscription(){
             'email' => esc_attr($_POST['pgm_email']),
         );
 
-        //attempt to create/save/update subscriber
-        $subscriber_id = pgm_save_subscriber($subscriber_data); 
+        //Setting up empty array to hold error data
+        $errors = array();
 
-        if($subscriber_id){
-            //Check if subscriber already has a subscription to the list
-            if(pgm_subscriber_has_subscription($subscriber_id,$list_id)){
+        // form validation
+        if( !strlen( $subscriber_data['fname'] ) ) $errors['fname'] = 'First name is required.';
+        if( !strlen( $subscriber_data['email'] ) ) $errors['email'] = 'Email address is required.';
+        if( strlen( $subscriber_data['email'] ) && !is_email( $subscriber_data['email'] ) ) $errors['email'] = 'Email address must be valid.';
 
-                $list = get_post($list_id);
+        if( count($errors)){
+            $result['error'] = 'Some fields are still required. ';
+            $result['errors'] = $errors;
+        
 
-                //return error message
-                $result['message'].=esc_attr($subscriber_data['email'].' is already subscribed to list '.$list->post_title.'.');
-            } else {
-                //save the new subscription
-                $subscription_saved = pgm_add_subscription($subscriber_id,$list_id);
+        else{
+
+            //attempt to create/save/update subscriber
+            $subscriber_id = pgm_save_subscriber($subscriber_data); 
+
+            if($subscriber_id){
+                //Check if subscriber already has a subscription to the list
+                if(pgm_subscriber_has_subscription($subscriber_id,$list_id)){
+
+                    $list = get_post($list_id);
+
+                    //return error message
+                    $result['message'].=esc_attr($subscriber_data['email'].' is already subscribed to list '.$list->post_title.'.');
+                } else {
+                    //save the new subscription
+                    $subscription_saved = pgm_add_subscription($subscriber_id,$list_id);
+                }
+
+                if($subscription_saved){
+                    $result['status'] = 1;
+                    $result['message'] = 'Subscription saved';
+                }
+
             }
-
-            if($subscription_saved){
-                $result['status'] = 1;
-                $result['message'] = 'Subscription saved';
-            }
-
         }
-    } catch(Exception $e){
+        }
+    }catch(Exception $e){
 
     } 
 
@@ -277,6 +308,7 @@ function pgm_save_subscription(){
     pgm_return_json($result);
 }
 
+//5.2 function to save new subscribers
 function pgm_save_subscriber($subscriber_data){
     //set default id=0, subscriber not saved.
     $subscriber_id = 0;
@@ -309,29 +341,31 @@ function pgm_save_subscriber($subscriber_data){
     return $subscriber_id;
 }
 
+
+//5.3 function adds subscriptions/lists to existing subscribers
 function pgm_add_subscription( $subscriber_id, $list_id ) {
-	
-	// setup default return value
-	$subscription_saved = false;
-	
-	// IF the subscriber does NOT have the current list subscription
-	if( !pgm_subscriber_has_subscription( $subscriber_id, $list_id ) ){
-	
-		// get subscriptions and append new $list_id
-		$subscriptions = pgm_get_subscriptions( $subscriber_id );
-		$subscriptions[]=$list_id;
-		
-		// update pgm_subscriptions
-		update_field( pgm_get_acf_key('pgm_subscriptions'), $subscriptions, $subscriber_id );
-		
-		// subscriptions updated!
-		$subscription_saved = true;
-	
+
+    // setup default return value
+    $subscription_saved = false;
+
+    // IF the subscriber does NOT have the current list subscription
+    if( !pgm_subscriber_has_subscription( $subscriber_id, $list_id ) ){
+
+        // get subscriptions and append new $list_id
+        $subscriptions = pgm_get_subscriptions( $subscriber_id );
+        $subscriptions[]=$list_id;
+
+        // update pgm_subscriptions
+        update_field( pgm_get_acf_key('pgm_subscriptions'), $subscriptions, $subscriber_id );
+
+        // subscriptions updated!
+        $subscription_saved = true;
+
     }
-	
-	// return result
-	return $subscription_saved;
-	
+
+    // return result
+    return $subscription_saved;
+
 }
 
 
@@ -340,6 +374,7 @@ function pgm_add_subscription( $subscriber_id, $list_id ) {
 
 
 /* !6. HELPERS */
+//6.1
 function pgm_subscriber_has_subscription($subscriber_id, $list_id){
     //set default value
     $has_subscription = false;
@@ -362,6 +397,7 @@ function pgm_subscriber_has_subscription($subscriber_id, $list_id){
     return $has_subscription;
 }
 
+//6.2
 function pgm_get_subscriber_id($email) {
     //set default value
     $subscriber_id = 0;
@@ -397,7 +433,7 @@ function pgm_get_subscriber_id($email) {
 
 }
 
-
+//6.3
 function pgm_get_subscriptions($subscriber_id){
     //initialize empty array
     $subscriptions = array();
@@ -421,7 +457,7 @@ function pgm_get_subscriptions($subscriber_id){
     return (array)$subscriptions;
 }
 
-
+//6.4
 function pgm_return_json($php_array){
     //encode results as json string
     $json_result = json_encode($php_array);
@@ -432,47 +468,48 @@ function pgm_return_json($php_array){
 
 }
 
-//Convert between custom field ids generated by acf
+//6.5 Convert between custom field ids generated by acf
 function pgm_get_acf_key( $field_name ) {
-	
-	$field_key = $field_name;
-	
-	switch( $field_name ) {
-		
-		case 'pgm_fname':
-			$field_key = 'field_57767bd66431b';
-			break;
-		case 'pgm_lname':
-			$field_key = 'field_57767bf76431c';
-			break;
-		case 'pgm_email':
-			$field_key = 'field_57767c396431d';
-			break;
-		case 'pgm_subscriptions':
-			$field_key = 'field_57767c886431e';
-			break;
-		
-	}
-	
-	return $field_key;
-	
+
+    $field_key = $field_name;
+
+    switch( $field_name ) {
+
+        case 'pgm_fname':
+            $field_key = 'field_57767bd66431b';
+            break;
+        case 'pgm_lname':
+            $field_key = 'field_57767bf76431c';
+            break;
+        case 'pgm_email':
+            $field_key = 'field_57767c396431d';
+            break;
+        case 'pgm_subscriptions':
+            $field_key = 'field_57767c886431e';
+            break;
+
+    }
+
+    return $field_key;
+
 }
 
+//6.6
 function pgm_get_subscriber_data($subscriber_id){
-    
+
     $subscriber_data = array();
     $subscriber = get_post($subscriber_id);
     if(isset($subscriber->post_type) && $subscriber->post_type == 'pgm_subscriber'){
-        
+
         $fname = get_field(pgm_get_acf_key('pgm_fname'),$subscriber_id);
         $lname = get_field(pgm_get_acf_key('pgm_lname'),$subscriber_id);
-        
+
         $subscriber_data = array(
-        'name'=>$fname.' '.$lname,
-        'fname'=>$fname,
-        'lname'=>$lname,
-        'email'=>get_field(pgm_get_acf_key('pgm_email'),$subscriber_id),
-        'subscriptions'=>pgm_get_subscriptions($subscriber_id)
+            'name'=>$fname.' '.$lname,
+            'fname'=>$fname,
+            'lname'=>$lname,
+            'email'=>get_field(pgm_get_acf_key('pgm_email'),$subscriber_id),
+            'subscriptions'=>pgm_get_subscriptions($subscriber_id)
         );
     }
     return $subscriber_data;
