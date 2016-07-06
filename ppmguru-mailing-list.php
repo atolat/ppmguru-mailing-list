@@ -77,6 +77,10 @@ add_filter('manage_pgm_list_posts_custom_column','pgm_list_column_data',1,2);
 add_action('wp_ajax_nopriv_pgm_save_subscription', 'pgm_save_subscription'); // regular website visitor
 add_action('wp_ajax_pgm_save_subscription', 'pgm_save_subscription'); // admin user
 
+//1.5
+//load external file
+add_action('wp_enqueue_scripts','pgm_public_scripts');
+
 
 
 /* !2. SHORTCODES */
@@ -92,7 +96,7 @@ function pgm_form_shortcode($args, $content = ""){
     if(isset($args['id'])){
         $list_id = (int)$args['id'];
     }
-    //form html
+    //form html-edit action firld to point to admin-ajax on the server.
     $output = '
     <!DOCTYPE html>
 <html lang="en">
@@ -109,7 +113,7 @@ function pgm_form_shortcode($args, $content = ""){
       </div>
 <div class="container">
     <div class="col-sm-6">
-       <form id="pgm_form" name="pgm_form" method="post"
+       <form id="pgm_form" name="pgm_form" class="pgm-form" method="post"
        action="/wordpress-plugin-course/wp-admin/admin-ajax.php?action=pgm_save_subscription" method="post">
 
        <input type="hidden" name="pgm_list" value="'. $list_id .'"> 
@@ -234,6 +238,12 @@ function pgm_list_column_data($column,$post_id){
 
 
 /* !4. EXTERNAL SCRIPTS */
+
+//4.1
+function pgm_public_scripts(){
+    wp_register_script('ppmguru-mailing-list-js-public',plugins_url('/js/public/ppmguru-mailing-list.js',__FILE__), array('jquery'),'',true);
+    wp_enqueue_script('ppmguru-mailing-list-js-public');
+}
 
 
 
