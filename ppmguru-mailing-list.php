@@ -315,6 +315,31 @@ function pgm_add_subscription( $subscriber_id, $list_id ) {
 	
 }
 
+function pgm_get_acf_key( $field_name ) {
+	
+	$field_key = $field_name;
+	
+	switch( $field_name ) {
+		
+		case 'pgm_fname':
+			$field_key = 'field_57767bd66431b';
+			break;
+		case 'pgm_lname':
+			$field_key = 'field_57767bf76431c';
+			break;
+		case 'pgm_email':
+			$field_key = 'field_57767c396431d';
+			break;
+		case 'pgm_subscriptions':
+			$field_key = 'field_57767c886431e';
+			break;
+		
+	}
+	
+	return $field_key;
+	
+}
+
 
 
 
