@@ -81,6 +81,13 @@ add_action('wp_ajax_pgm_save_subscription', 'pgm_save_subscription'); // admin u
 //load external file
 add_action('wp_enqueue_scripts','pgm_public_scripts');
 
+// 1.6
+// Advanced Custom Fields Settings
+add_filter('acf/settings/path', 'pgm_acf_settings_path');
+add_filter('acf/settings/dir', 'pgm_acf_settings_dir');
+add_filter('acf/settings/show_admin', 'pgm_acf_show_admin');
+if( !defined('ACF_LITE') ) define('ACF_LITE',true); // turn off ACF plugin menu
+
 
 
 /* !2. SHORTCODES */
@@ -245,6 +252,8 @@ function pgm_public_scripts(){
     wp_enqueue_script('ppmguru-mailing-list-js-public');
 }
 
+//4.2 Include ACF
+include_once(plugin_dir_path(__FILE__).'lib/advanced-custom-fields/acf.php');
 
 
 
